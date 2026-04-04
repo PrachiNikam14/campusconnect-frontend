@@ -10,6 +10,9 @@ export const getProfile = () =>
 export const updateProfile = (data) =>
   API.patch("/student/profile", data);
 
+export const getColleges = () => 
+  API.get("/student/colleges");
+
 // EVENTS
 export const getEvents = () =>
   API.get("/student/events");

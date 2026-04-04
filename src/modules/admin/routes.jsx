@@ -8,6 +8,8 @@ import Vendors from "./pages/Vendors";
 import Events from "./pages/Events";
 import CollegeDetails from "./pages/CollegeDetails";
 import VendorDetails from "./pages/VendorDetails";
+import StudentDetails from "./pages/StudentDetails";
+import EventDetails from "./pages/EventDetails";
 
 const AdminRoutes = () => {
   return (
@@ -20,11 +22,14 @@ const AdminRoutes = () => {
         <Route path="" element={<Dashboard />} />
         <Route path="users" element={<Users />} />
         <Route path="students" element={<Students />} />
-        <Route path="colleges" element={<Colleges />} />
+        <Route path="/students/:id" element={<StudentDetails />} />
+        <Route path="colleges" element={<Colleges />} /> 
         <Route path="/colleges/:id" element={<CollegeDetails />} />
         <Route path="vendors" element={<Vendors />} />
         <Route path="vendors/:id" element={<VendorDetails />} />
         <Route path="events" element={<Events />} />
+        <Route path="events/:id" element={<EventDetails />} />
+
       </Route>
 
     </Routes>

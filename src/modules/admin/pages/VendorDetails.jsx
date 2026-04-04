@@ -57,7 +57,7 @@ const VendorDetails = () => {
           className={`font-bold ${
             vendor.verificationStatus === "APPROVED"
               ? "text-green-500"
-              : college.verificationStatus === "REJECTED"
+              : vendor.verificationStatus === "REJECTED"
               ? "text-red-500"
               : "text-yellow-500"
           }`}
