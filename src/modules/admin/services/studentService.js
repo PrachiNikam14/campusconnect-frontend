@@ -15,6 +15,15 @@ export const getStudents = async (status) => {
   }
 };
 
+export const getStudentById = async (id) => {
+  try{
+    const response = await API.get(`${studentAPI}/${id}`);
+    return response.data;
+  }catch (error) {
+    console.error(error);
+  }
+}
+
 export const updateStudentStatus = async (id, status) => {
   try {
     const response = await API.patch(`${studentAPI}/${id}/status`, null, {

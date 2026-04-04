@@ -6,7 +6,8 @@ import EventDetailsPage from "./pages/EventDetailsPage";
 import StudentRegisteredEventPage from "./pages/StudentRegisteredEventPage";
 import AuthCheck from "./pages/AuthCheck";
 import Profile from "./pages/Profile";
-import CreateProfile from "./pages/UpdProfile";
+import CreateProfile from "./pages/CreateProfile";
+import UpdateProfile from "./pages/UpdateProfile";
 
 const StudentRoutes = (
   <Route path="/student" element={<StudentLayout />}>
@@ -17,6 +18,7 @@ const StudentRoutes = (
     {/* Profile */}
     <Route path="profile" element={<Profile />} />
     <Route path="create-profile" element={<CreateProfile />} />
+    <Route path="update-profile" element={<UpdateProfile />} />
 
     {/* Events */}
     <Route path="events">

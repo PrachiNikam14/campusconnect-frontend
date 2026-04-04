@@ -3,22 +3,27 @@ import {
   getStudents,
   updateStudentStatus,
 } from "../services/studentService";
+import StatusBadge from "../components/StatusBadge";
+import { useNavigate } from "react-router-dom";
+
 
 const Students = () => {
   const [students, setStudents] = useState([]);
-  const [filterStatus, setFilterStatus] = useState("ALL");
+  const [filter, setFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchStudents = async () => {
     setLoading(true);
-    const data = await getStudents(filterStatus);
+    const data = await getStudents(filter);
     setStudents(data);
+    console.log(data);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchStudents();
-  }, [filterStatus]);
+  }, [filter]);
 
   const handleStatusUpdate = async (id, status) => {
     await updateStudentStatus(id, status);
@@ -28,7 +33,7 @@ const Students = () => {
   return (
     <div className="section bg-soft min-h-screen">
 
-      <div className="section-inner">
+      <div className="section-inner space-y-6">
 
         {/* Title */}
         <h2 className="section-title text-center">
@@ -36,21 +41,24 @@ const Students = () => {
         </h2>
 
         {/* Filter */}
-        <div className="flex justify-end mb-4">
-          <select
-            className="input w-40"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+        <div className="flex gap-3">
+        {["ALL", "PENDING", "APPROVED", "REJECTED"].map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilter(s)}
+            className={`px-4 py-2 rounded-lg border ${
+              filter === s
+                ? "bg-indigo-500 text-white"
+                : "bg-white"
+            }`}
           >
-            <option value="ALL">All</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
-        </div>
+            {s}
+          </button>
+        ))}
+      </div>
 
         {/* Table Card */}
-        <div className="card overflow-x-auto">
+        <div className="overflow-x-auto border rounded-xl">
 
           <table className="w-full min-w-[700px] text-sm">
 
@@ -94,44 +102,36 @@ const Students = () => {
 
                     {/* Status Badge */}
                     <td className="p-3">
-                      <span
-                        className={`badge ${
-                          s.verificationStatus === "APPROVED"
-                            ? "bg-green-100 text-green-600"
-                            : s.verificationStatus === "REJECTED"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-yellow-100 text-yellow-600"
-                        }`}
-                      >
-                        {s.verificationStatus}
-                      </span>
+                      <StatusBadge status={s.verificationStatus} />
                     </td>
 
                     {/* Actions */}
-                    <td className="p-3">
-                      {s.verificationStatus === "PENDING" && (
-                        <div className="flex gap-2">
+                    <td className="p-3 text-center space-x-2">
+                      <button
+                      onClick={() => navigate(`/admin/students/${s.id}`)}
+                      className="px-3 py-1 text-sm bg-blue-500 text-white rounded"
+                    >
+                      View
+                    </button>
 
-                          <button
-                            className="btn-primary text-xs px-3 py-1.5"
-                            onClick={() =>
-                              handleStatusUpdate(s.id, "APPROVED")
-                            }
-                          >
-                            Approve
-                          </button>
+                    <button
+                      onClick={() =>
+                        handleStatusUpdate(s.id, "APPROVED")
+                      }
+                      className="px-3 py-1 text-sm bg-green-500 text-white rounded"
+                    >
+                      Approve
+                    </button>
 
-                          <button
-                            className="btn-outline text-xs px-3 py-1.5"
-                            onClick={() =>
-                              handleStatusUpdate(s.id, "REJECTED")
-                            }
-                          >
-                            Reject
-                          </button>
+                    <button
+                      onClick={() =>
+                        handleStatusUpdate(s.id, "REJECTED")
+                      }
+                      className="px-3 py-1 text-sm bg-red-500 text-white rounded"
+                    >
+                      Reject
+                    </button>
 
-                        </div>
-                      )}
                     </td>
                   </tr>
                 ))

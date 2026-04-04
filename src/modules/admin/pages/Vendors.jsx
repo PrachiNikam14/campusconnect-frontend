@@ -37,10 +37,12 @@ const Vendors = () => {
   };
 
   return (
-    <div className="space-y-6">
+  <div className="section bg-soft min-h-screen">
+
+    <div className=" section-inner space-y-6">
 
       {/* Title */}
-      <h1 className="text-2xl font-bold">
+      <h1 className="section-title text-center">
         Vendor Verification
       </h1>
 
@@ -152,6 +154,7 @@ const Vendors = () => {
         </table>
       </div>
     </div>
+  </div>  
   );
 };
 

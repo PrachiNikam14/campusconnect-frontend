@@ -11,7 +11,7 @@ export default function AuthCheck() {
         await getProfile();
         navigate("/student/profile"); // ✅ profile exists
       } catch (err) {
-        console.log(err);
+        console.log("redirecting to create profile page");
         navigate("/student/create-profile"); // ❌ profile not created
       }
     };
