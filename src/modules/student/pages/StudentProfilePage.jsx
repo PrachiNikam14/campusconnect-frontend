@@ -1,198 +1,254 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+// import React, { useState, useEffect } from "react";
+// import axios from "axios";
 
-export default function StudentProfilePage() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [error, setError] = useState("");
+// export default function StudentProfilePage() {
+//   const [profile, setProfile] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [editMode, setEditMode] = useState(true);
+//   const [avatarFile, setAvatarFile] = useState(null);
+//   const [idCardFile, setIdCardFile] = useState(null);
+//   const [error, setError] = useState("");
 
-  const [formData, setFormData] = useState({
-    department: "",
-    year: "",
-    bio: "",
-    skills: "",
-    hobbies: "",
-    linkedinUrl: "",
-    githubUrl: "",
-  });
+//   const [formData, setFormData] = useState({
+//     name: "",
+//     department: "",
+//     year: "",
+//     bio: "",
+//     skills: "",
+//     hobbies: "",
+//     linkedinUrl: "",
+//     githubUrl: "",
+//     rollNumber: "",
+//   });
 
-  const token = localStorage.getItem("token");
+//   const token = localStorage.getItem("token");
+//   if (!token) return <div className="p-6 text-red-500">Please login first</div>;
 
-  // 🚨 Protect route (important)
-  if (!token) {
-    return (
-      <div className="p-6 text-red-500 font-semibold">
-        Please login first
-      </div>
-    );
-  }
+//   // ---------------- FETCH PROFILE ----------------
+//   useEffect(() => {
+//     axios
+//       .get("http://localhost:8080/student/profile", {
+//         headers: { Authorization: `Bearer ${token}` },
+//       })
+//       .then((res) => {
+//         const data = res.data;
 
-  useEffect(() => {
-    console.log("TOKEN:", token);
+//         if (!data || Object.keys(data).length === 0) {
+//           setProfile({});
+//           setEditMode(true);
+//           return;
+//         }
 
-    axios
-      .get("http://localhost:8080/student/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        console.log("PROFILE:", res.data);
+//         setProfile(data);
 
-        setProfile(res.data);
+//         setFormData({
+//           name: data.userName || "",
+//           department: data.department || "",
+//           year: data.year || "",
+//           bio: data.bio || "",
+//           skills: Array.isArray(data.skills)
+//             ? data.skills.join(", ")
+//             : "",
+//           hobbies: data.hobbies || "",
+//           linkedinUrl: data.linkedinUrl || "",
+//           githubUrl: data.githubUrl || "",
+//           rollNumber: data.rollNumber || "",
+//         });
 
-        setFormData({
-          department: res.data.department || "",
-          year: res.data.year || "",
-          bio: res.data.bio || "",
-          skills: Array.isArray(res.data.skills)
-            ? res.data.skills.join(", ")
-            : res.data.skills || "",
-          hobbies: res.data.hobbies || "",
-          linkedinUrl: res.data.linkedinUrl || "",
-          githubUrl: res.data.githubUrl || "",
-        });
-      })
-      .catch((err) => {
-        console.error("ERROR:", err.response || err.message);
-        setError(
-          err.response?.data?.message ||
-            "Failed to fetch profile. Please try again."
-        );
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [token]);
+//         setEditMode(!data.department || !data.year || !data.skills);
+//       })
+//       .catch((err) => {
+//         if (err.response?.status === 404) {
+//           setProfile({});
+//           setEditMode(true);
+//         } else {
+//           setError("Failed to fetch profile");
+//         }
+//       })
+//       .finally(() => setLoading(false));
+//   }, [token]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+//   // ---------------- INPUT HANDLING ----------------
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     setFormData((prev) => ({ ...prev, [name]: value }));
+//   };
 
-  const handleAvatarChange = (e) => {
-    setAvatarFile(e.target.files[0]);
-  };
+//   const handleAvatarChange = (e) => {
+//     setAvatarFile(e.target.files[0]);
+//   };
 
-  const handleSave = async () => {
-    try {
-      setLoading(true);
+//   const handleIdCardChange = (e) => {
+//     setIdCardFile(e.target.files[0]);
+//   };
 
-      await axios.put(
-        "http://localhost:8080/student/profile",
-        {
-          ...formData,
-          skills: formData.skills.split(",").map((s) => s.trim()),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+//   // ---------------- SAVE PROFILE ----------------
+//   const handleSave = async () => {
+//     try {
+//       setLoading(true);
 
-      if (avatarFile) {
-        const fileData = new FormData();
-        fileData.append("file", avatarFile);
+//       const form = new FormData();
 
-        await axios.post(
-          "http://localhost:8080/student/profile/photo",
-          fileData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-      }
+//       form.append("name", formData.name);
+//       form.append("department", formData.department);
 
-      alert("Profile updated successfully!");
-      setEditMode(false);
+//       // year validation (1–4)
+//       const year = Number(formData.year);
+//       if (year >= 1 && year <= 4) {
+//         form.append("year", year);
+//       }
 
-      // 🔁 Refresh profile
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update profile");
-    } finally {
-      setLoading(false);
-    }
-  };
+//       form.append("bio", formData.bio);
+//       form.append("hobbies", formData.hobbies);
+//       form.append("linkedinUrl", formData.linkedinUrl);
+//       form.append("githubUrl", formData.githubUrl);
+//       form.append("rollNumber", formData.rollNumber);
 
-  // ✅ UI STATES
+//       // skills
+//       if (formData.skills) {
+//         formData.skills.split(",").forEach((skill) => {
+//           const trimmed = skill.trim();
+//           if (trimmed) {
+//             form.append("skills", trimmed);
+//           }
+//         });
+//       }
 
-  if (loading) {
-    return <div className="p-6">Loading profile...</div>;
-  }
+//       // profile photo
+//       if (avatarFile) {
+//         form.append("profilePhoto", avatarFile);
+//       }
 
-  if (error) {
-    return <div className="p-6 text-red-500">{error}</div>;
-  }
+//       // id card (IMPORTANT)
+//       if (idCardFile) {
+//         form.append("idCard", idCardFile);
+//       }
 
-  if (!profile) {
-    return <div className="p-6">No profile found</div>;
-  }
+//       const url = "http://localhost:8080/student/profile";
 
+//       if (!profile || Object.keys(profile).length === 0) {
+//         await axios.post(url, form, {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+//       } else {
+//         await axios.patch(url, form, {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+//       }
+
+//       alert("Profile saved successfully!");
+//       setEditMode(false);
+
+//       // Refresh profile
+//       const res = await axios.get(url, {
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       setProfile(res.data);
+
+//     } catch (err) {
+//       console.error("ERROR:", err.response?.data);
+//       alert("Failed to save profile");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // ---------------- UI ----------------
+//   if (loading)
+//     return <div className="p-6 text-center text-gray-500">Loading...</div>;
+
+//   if (error) return <div className="p-6 text-red-500">{error}</div>;
+
+//   return (
+//     <div className="min-h-screen bg-hero py-8 px-4 sm:px-6 lg:px-12">
+//       <div className="max-w-5xl mx-auto">
+
+//         <div className="card-glass p-8 flex flex-col md:flex-row gap-8">
+
+//           {/* Avatar */}
+//           <div className="flex flex-col items-center gap-4 w-full md:w-1/3">
+//             <div className="relative">
+//               <img
+//                 src={profile?.profilePhoto || "/default-avatar.png"}
+//                 alt="avatar"
+//                 className="w-36 h-36 rounded-full object-cover border-4 shadow-lg"
+//               />
+//               {editMode && (
+//                 <input
+//                   type="file"
+//                   onChange={handleAvatarChange}
+//                   className="absolute inset-0 opacity-0 cursor-pointer"
+//                 />
+//               )}
+//             </div>
+
+//             <h2 className="text-xl font-bold">{profile?.userName}</h2>
+//             <p className="text-gray-600">{profile?.userEmail}</p>
+//           </div>
+
+//           {/* Form */}
+//           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+//             {Object.entries(formData).map(([key, value]) => (
+//               <div key={key}>
+//                 <label className="text-gray-500 text-sm">{key}</label>
+
+//                 {editMode ? (
+//                   <input
+//                     type="text"
+//                     name={key}
+//                     value={value}
+//                     onChange={handleChange}
+//                     className="input"
+//                   />
+//                 ) : (
+//                   <p>{value || "Not provided"}</p>
+//                 )}
+//               </div>
+//             ))}
+
+//             {/* ID CARD UPLOAD */}
+//             {editMode && (
+//               <div className="col-span-2">
+//                 <label className="text-gray-500 text-sm">Upload ID Card</label>
+//                 <input type="file" onChange={handleIdCardChange} />
+//               </div>
+//             )}
+
+//             <div className="col-span-2 flex gap-4 mt-4">
+//               {editMode ? (
+//                 <>
+//                   <button onClick={handleSave} className="btn-primary">
+//                     Save
+//                   </button>
+//                   <button onClick={() => setEditMode(false)} className="btn-outline">
+//                     Cancel
+//                   </button>
+//                 </>
+//               ) : (
+//                 <button onClick={() => setEditMode(true)} className="btn-primary">
+//                   Edit Profile
+//                 </button>
+//               )}
+//             </div>
+//           </div>
+
+//         </div>
+
+//       </div>
+//     </div>
+//   );
+// }
+
+const StudentProfilePage = ()=>{
   return (
-    <div className="p-6 md:p-10">
-      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
+    <p>hello student</p>
+  )
 
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Avatar */}
-        <div className="flex flex-col items-center md:items-start gap-4">
-          <img
-            src={profile.profilePhoto || "/default-avatar.png"}
-            alt={profile.name}
-            className="w-32 h-32 rounded-full object-cover border-2 border-gray-300"
-          />
-
-          {editMode && (
-            <input type="file" onChange={handleAvatarChange} />
-          )}
-        </div>
-
-        {/* Fields */}
-        <div className="flex-1 flex flex-col gap-4">
-          {Object.entries(formData).map(([key, value]) => (
-            <div key={key}>
-              <label className="block font-medium capitalize">
-                {key.replace(/([A-Z])/g, " $1")}:
-              </label>
-
-              {editMode ? (
-                <input
-                  type="text"
-                  name={key}
-                  value={value}
-                  onChange={handleChange}
-                  className="border p-2 rounded w-full"
-                />
-              ) : (
-                <p className="mt-1 text-gray-700">
-                  {value || "Not provided"}
-                </p>
-              )}
-            </div>
-          ))}
-
-          <div className="mt-4">
-            {editMode ? (
-              <button
-                onClick={handleSave}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Save
-              </button>
-            ) : (
-              <button
-                onClick={() => setEditMode(true)}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Edit Profile
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
+
+  export default StudentProfilePage;
