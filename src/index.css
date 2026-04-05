@@ -321,3 +321,39 @@ body {
 .bg-section-b{ background: var(--grad-section-b); }
 .bg-cta      { background: var(--grad-cta); }
 .bg-soft     { background: var(--color-bg-soft); }
+
+/* ── Sidebar ── */
+.sidebar {
+  @apply min-h-screen flex flex-col p-4 transition-all duration-300 text-white;
+
+  /* 🔥 Dark overlay on top of your gradient */
+  background: 
+    linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)),
+    var(--grad-primary);
+
+  box-shadow: var(--shadow-card);
+  border-right: 1px solid rgba(255,255,255,0.15);
+}
+
+/* Sidebar item */
+.sidebar-item {
+  @apply flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-200;
+}
+
+/* Hover + Active */
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.sidebar-item-active {
+  background: rgba(255,255,255,0.22);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+/* Toggle button */
+.sidebar-toggle {
+  @apply p-2 rounded transition-colors duration-200;
+}
+.sidebar-toggle:hover {
+  background: rgba(255,255,255,0.15);
+}
