@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProfile } from "../services/studentService";
 import { useNavigate } from "react-router-dom";
+import { logoutUser } from "../../public/pages/auth";
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -78,7 +79,9 @@ export default function Profile() {
             Edit Profile
           </button>
 
-          <button className="w-full border border-gray-300 text-gray-600 text-sm py-2.5 rounded-xl hover:bg-gray-100 transition">
+          <button 
+            onClick={() => logoutUser(navigate)}
+            className="w-full border border-gray-300 text-gray-600 text-sm py-2.5 rounded-xl hover:bg-gray-100 transition">
             Logout
           </button>
         </div>
