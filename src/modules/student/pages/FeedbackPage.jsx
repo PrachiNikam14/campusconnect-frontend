@@ -1,194 +1,332 @@
 import React, { useEffect, useState } from "react";
-import {
-  getRegisteredEvents,
-  submitFeedback,
-} from "../services/studentService";
+import API from "../../../api/axios";
+import { useParams } from "react-router-dom";
 
 const FeedbackPage = () => {
   const [events, setEvents] = useState([]);
-  const [feedbacks, setFeedbacks] = useState({});
-  const [submittedMap, setSubmittedMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [submittingId, setSubmittingId] = useState(null);
 
-  // ✅ Fetch events safely
-  const fetchEvents = async () => {
+  const [formData, setFormData] = useState({});
+  const [openFormId, setOpenFormId] = useState(null);
+
+  // ✅ Get eventId from URL
+  const { eventId } = useParams();
+
+  useEffect(() => {
+    fetchFeedbackEvents();
+  }, []);
+
+  const fetchFeedbackEvents = async () => {
     try {
-      const res = await getRegisteredEvents();
-
-      // Handle different backend response structures
-      const eventList = res?.data?.content || res?.data || [];
-
-      const completed = eventList.filter((e) => {
-        const eventDate = new Date(e.eventDate);
-        return !isNaN(eventDate) && eventDate < new Date();
-      });
-
-      setEvents(completed);
+      const res = await API.get("/student/feedback");
+      setEvents(res.data);
+      console.log(res.data);
     } catch (err) {
-      console.error("FETCH ERROR:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  // ✅ Handle input change
-  const handleChange = (eventId, field, value) => {
-    setFeedbacks((prev) => ({
-      ...prev,
-      [eventId]: {
-        ...prev[eventId],
-        [field]: value,
-      },
-    }));
-  };
-
-  // ✅ Submit feedback safely
   const handleSubmit = async (eventId) => {
-    const data = feedbacks[eventId] || {};
+    const data = formData[eventId];
 
-    if (!data.rating || !data.message) {
-      alert("Please fill all fields");
+    if (!data || data.rating === 0) {
+      alert("Please select rating");
       return;
     }
 
-    try {
-      await submitFeedback({
-        eventId,
-        rating: Number(data.rating),
-        message: data.message, // change to "feedback" if backend expects that
-      });
+    setSubmittingId(eventId);
 
-      setSubmittedMap((prev) => ({
+    try {
+      await API.post(`/student/feedback/${eventId}`, data);
+
+      // ✅ Update UI instantly
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.eventId === eventId
+            ? {
+                ...e,
+                rating: data.rating,
+                message: data.message,
+                submitted: true,
+              }
+            : e
+        )
+      );
+
+      setFormData((prev) => ({
         ...prev,
-        [eventId]: true,
+        [eventId]: { rating: 0, message: "" },
       }));
 
-      alert("✅ Feedback submitted successfully!");
+      setOpenFormId(null);
     } catch (err) {
-      console.error("SUBMIT ERROR:", err);
-      alert(err.response?.data || "Error submitting feedback");
+      console.error(err);
+      alert("Failed to submit feedback");
+    } finally {
+      setSubmittingId(null);
     }
   };
 
-  // ✅ Loading UI
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600 font-semibold">Loading events...</p>
-      </div>
-    );
+    return <p className="text-center mt-10">Loading feedback...</p>;
   }
 
+  // ✅ FILTER EVENT IF COMING FROM BUTTON
+  const filteredEvents = eventId
+    ? events.filter((e) => String(e.eventId) === String(eventId))
+    : events;
+
   return (
-    <div className="min-h-screen bg-section-a section">
-      <div className="section-inner">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-2xl font-bold mb-6">My Feedback</h1>
 
-        {/* HEADER */}
-        <div className="text-center mb-10">
-          <div className="section-eyebrow bg-purple-100 text-purple-600">
-            Student Feedback
-          </div>
-          <h1 className="section-title text-grad-primary">
-            Share Your Experience
-          </h1>
-          <p className="section-desc">
-            Help us improve by giving feedback on events you've attended.
-          </p>
-        </div>
+      {filteredEvents.length === 0 ? (
+        <p>No events found for feedback.</p>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((event) => {
+            const isSubmitted =
+              event.submitted || (event.rating && event.rating > 0);
 
-        {/* EMPTY STATE */}
-        {events.length === 0 ? (
-          <div className="card text-center p-10">
-            <p className="text-muted">No completed events available</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
+            const currentForm = formData[event.eventId] || {
+              rating: 0,
+              message: "",
+            };
 
-            {events.map((event) => (
+            return (
               <div
-                key={event.id}
-                className={`card p-6`}
+                key={event.eventId}
+                className="bg-white p-6 rounded-xl shadow"
               >
-                {/* EVENT INFO */}
-                <div className="mb-4">
-                  <h2 className="text-lg font-bold text-grad-secondary">
-                    {event.title}
-                  </h2>
-                  <p className="text-sm text-muted mt-1">
-                    {event.description}
-                  </p>
+                <h2 className="font-bold text-lg">{event.eventTitle}</h2>
 
-                  <div className="mt-3 text-xs text-gray-500">
-                    📅{" "}
-                    {new Date(event.eventDate).toLocaleDateString("en-IN")}
-                  </div>
-                </div>
+                {isSubmitted ? (
+                  // ✅ Submitted UI
+                  <div className="mt-4">
+                    <p className="text-yellow-500 text-lg">
+                      {"⭐".repeat(event.rating || 0)}
+                    </p>
+                    <p className="text-gray-600 mt-2">
+                      {event.message || "No message"}
+                    </p>
 
-                {/* ALREADY SUBMITTED */}
-                {submittedMap[event.id] ? (
-                  <div className="badge bg-green-100 text-green-600">
-                    ✅ Feedback Submitted
+                    <div className="mt-3 text-green-600 text-sm font-medium">
+                      ✅ Feedback Submitted
+                    </div>
                   </div>
                 ) : (
-                  <>
-                    {/* RATING */}
-                    <div className="mb-3">
-                      <label className="text-sm font-semibold">
-                        Rating
-                      </label>
-                      <select
-                        className="input mt-1"
-                        value={feedbacks[event.id]?.rating || ""}
-                        onChange={(e) =>
-                          handleChange(event.id, "rating", e.target.value)
-                        }
+                  <div className="mt-4">
+                    {openFormId !== event.eventId ? (
+                      // ✅ BUTTON
+                      <button
+                        onClick={() => setOpenFormId(event.eventId)}
+                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
                       >
-                        <option value="">Select rating</option>
-                        <option value="1">1 ⭐</option>
-                        <option value="2">2 ⭐</option>
-                        <option value="3">3 ⭐</option>
-                        <option value="4">4 ⭐</option>
-                        <option value="5">5 ⭐</option>
-                      </select>
-                    </div>
+                        Give Feedback
+                      </button>
+                    ) : (
+                      // ✅ FORM
+                      <div className="space-y-3">
+                        {/* ⭐ Rating */}
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span
+                              key={star}
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  [event.eventId]: {
+                                    ...currentForm,
+                                    rating: star,
+                                  },
+                                }))
+                              }
+                              className={`cursor-pointer text-2xl ${
+                                currentForm.rating >= star
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
 
-                    {/* MESSAGE */}
-                    <div className="mb-4">
-                      <label className="text-sm font-semibold">
-                        Feedback
-                      </label>
-                      <textarea
-                        className="input mt-1"
-                        rows="3"
-                        placeholder="Write your feedback..."
-                        value={feedbacks[event.id]?.message || ""}
-                        onChange={(e) =>
-                          handleChange(event.id, "message", e.target.value)
-                        }
-                      />
-                    </div>
+                        {/* 📝 Message */}
+                        <textarea
+                          placeholder="Write your feedback..."
+                          className="w-full border rounded-lg p-2 text-sm"
+                          value={currentForm.message}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              [event.eventId]: {
+                                ...currentForm,
+                                message: e.target.value,
+                              },
+                            }))
+                          }
+                        />
 
-                    {/* BUTTON */}
-                    <button
-                      onClick={() => handleSubmit(event.id)}
-                      className="btn-primary w-full"
-                    >
-                      Submit Feedback
-                    </button>
-                  </>
+                        {/* 🚀 Submit */}
+                        <button
+                          onClick={() => handleSubmit(event.eventId)}
+                          disabled={submittingId === event.eventId}
+                          className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition"
+                        >
+                          {submittingId === event.eventId
+                            ? "Submitting..."
+                            : "Submit Feedback"}
+                        </button>
+
+                        {/* ❌ Cancel */}
+                        <button
+                          onClick={() => setOpenFormId(null)}
+                          className="w-full text-sm text-gray-500"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            ))}
-
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
 
 export default FeedbackPage;
+
+// import React, { useEffect, useState } from "react";
+// import API from "../../../api/axios";
+
+
+// const FeedbackPage = () => {
+//   const [events, setEvents] = useState([]);
+//   const [formData, setFormData] = useState({});
+//   const [loading, setLoading] = useState(true);
+//   const [submittingId, setSubmittingId] = useState(null);
+
+//   // ✅ Fetch feedback data
+//   const fetchFeedback = async () => {
+//     try {
+//       const res = await API.get("/student/feedback");
+//       setEvents(res.data);
+//       console.log(res.data);
+//     } catch (err) {
+//       console.error(err);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchFeedback();
+//   }, []);
+
+//   // ✅ Handle input change per event
+//   const handleChange = (eventId, field, value) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       [eventId]: {
+//         ...prev[eventId],
+//         [field]: value,
+//       },
+//     }));
+//   };
+
+//   // ✅ Submit feedback
+//   const handleSubmit = async (eventId) => {
+//     const data = formData[eventId];
+
+//     if (!data?.rating || !data?.message) {
+//       alert("Please fill all fields");
+//       return;
+//     }
+
+//     try {
+//       setSubmittingId(eventId);
+
+//       await API.post("/student/feedback", {
+//         eventId,
+//         rating: data.rating,
+//         message: data.message,
+//       });
+
+//       alert("Feedback submitted!");
+//       fetchFeedback(); // refresh UI
+//     } catch (err) {
+//       alert(err.response?.data || "Error submitting feedback");
+//     } finally {
+//       setSubmittingId(null);
+//     }
+//   };
+
+//   if (loading) return <p>Loading...</p>;
+
+//   return (
+//     <div className="p-6">
+//       <h1 className="text-2xl font-bold mb-6">My Event Feedback</h1>
+
+//       {events.length === 0 && <p>No completed events</p>}
+
+//       {events.map((event) => (
+//         <div
+//           key={event.eventId}
+//           className="border p-4 mb-4 rounded shadow"
+//         >
+//           <h2 className="text-lg font-semibold">
+//             {event.eventTitle}
+//           </h2>
+
+//           {event.isSubmitted ? (
+//             <div className="mt-2">
+//               <p>⭐ Rating: {event.rating}</p>
+//               <p>💬 {event.message}</p>
+//             </div>
+//           ) : (
+//             <div className="mt-3 space-y-2">
+//               <input
+//                 type="number"
+//                 placeholder="Rating (1-5)"
+//                 min="1"
+//                 max="5"
+//                 className="border p-2 w-full"
+//                 onChange={(e) =>
+//                   handleChange(event.eventId, "rating", e.target.value)
+//                 }
+//               />
+
+//               <textarea
+//                 placeholder="Write feedback..."
+//                 className="border p-2 w-full"
+//                 onChange={(e) =>
+//                   handleChange(event.eventId, "message", e.target.value)
+//                 }
+//               />
+
+//               <button
+//                 onClick={() => handleSubmit(event.eventId)}
+//                 disabled={submittingId === event.eventId}
+//                 className="bg-blue-500 text-white px-4 py-2 rounded"
+//               >
+//                 {submittingId === event.eventId
+//                   ? "Submitting..."
+//                   : "Submit"}
+//               </button>
+//             </div>
+//           )}
+//         </div>
+//       ))}
+//     </div>
+//   );
+// };
+
+// export default FeedbackPage;
